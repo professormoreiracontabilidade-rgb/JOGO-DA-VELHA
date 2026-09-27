@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#063b6f">
+  <title>Jogo da Velha Infinito | Professor Moreira</title>
+  <style>
+    :root{--azul:#063b6f;--azul2:#0c69ae;--ouro:#f4c542;--claro:#eaf7ff;--x:#ef3340;--o:#087f5b;--sombra:0 12px 30px #00294d33}
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    body{margin:0;min-height:100svh;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(circle at top,#dff5ff 0,#9dd9f4 42%,#317cad 100%);color:#082c49;display:grid;place-items:center;padding:14px}
+    .app{width:min(100%,520px);background:#ffffffed;border:3px solid #fff;border-radius:28px;box-shadow:var(--sombra);overflow:hidden}
+    header{background:linear-gradient(135deg,var(--azul),var(--azul2));color:#fff;text-align:center;padding:16px 15px 14px}
+    header small{display:block;font-weight:800;letter-spacing:.4px;color:#ffe58a}h1{font-size:clamp(25px,7vw,38px);margin:3px 0 0;line-height:1.05}
+    main{padding:14px}.score{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}.player{padding:10px;border-radius:16px;background:#edf7ff;text-align:center;font-weight:900;border:2px solid transparent}.player.active{border-color:var(--ouro);box-shadow:0 0 0 3px #f4c54244}.player b{display:block;font-size:26px}.pX b{color:var(--x)}.pO b{color:var(--o)}.versus{font-weight:1000;color:#527086}
+    .status{margin:12px 0 10px;text-align:center;font-size:19px;font-weight:900;min-height:52px;display:grid;place-items:center;background:#fff8d7;border-radius:14px;padding:7px 10px;border:2px solid #f7d969}
+    .board{width:min(88vw,390px);aspect-ratio:1;margin:auto;display:grid;grid-template-columns:repeat(3,1fr);gap:9px;background:var(--azul);padding:9px;border-radius:22px;box-shadow:0 10px 25px #063b6f44}
+    .cell{border:0;border-radius:15px;background:linear-gradient(145deg,#fff,#dff3ff);font-size:clamp(49px,17vw,86px);font-weight:1000;line-height:1;cursor:pointer;display:grid;place-items:center;box-shadow:inset 0 -5px 0 #bdd9e8;transition:.14s transform,.14s filter}.cell:active{transform:scale(.94)}.cell.x{color:var(--x);text-shadow:0 3px 0 #a91525}.cell.o{color:var(--o);text-shadow:0 3px 0 #045a40}.cell.selected{outline:6px solid var(--ouro);transform:scale(.9);filter:brightness(1.08)}.cell.target{animation:pulse 1s infinite}.cell.win{background:#fff1a8;animation:win .55s alternate infinite}
+    @keyframes pulse{50%{box-shadow:inset 0 -5px 0 #bdd9e8,0 0 0 5px #fff38a}}@keyframes win{to{transform:scale(.9) rotate(3deg)}}
+    .hint{text-align:center;font-size:14px;font-weight:700;color:#49687f;margin:11px 4px 0;min-height:39px}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:10px}.actions button{border:0;border-radius:14px;padding:13px 8px;font-weight:900;font-size:16px;cursor:pointer}.new{background:var(--azul);color:#fff}.reset{background:#e6edf2;color:#193b53}
+    footer{text-align:center;font-size:12px;font-weight:800;color:#5c7485;padding:0 12px 14px}.overlay{position:fixed;inset:0;background:#001b2dcc;display:none;place-items:center;padding:20px;z-index:5}.overlay.show{display:grid}.modal{width:min(100%,430px);background:#fff;border-radius:26px;text-align:center;padding:25px;box-shadow:var(--sombra);animation:pop .3s}.modal .cup{font-size:70px}.modal h2{font-size:34px;color:var(--azul);margin:2px}.modal p{font-size:19px;font-weight:800}.modal button{border:0;border-radius:15px;background:var(--ouro);color:#092e4c;font-size:18px;font-weight:1000;padding:14px 25px}@keyframes pop{from{transform:scale(.6);opacity:0}}
+    .confetti{position:fixed;top:-20px;width:11px;height:18px;z-index:8;animation:fall 2.2s linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(800deg)}}
+  </style>
+</head>
+<body>
+  <section class="app" aria-label="Jogo da velha infinito">
+    <header><small>CURSO DE CONTABILIDADE</small><h1>Professor Moreira</h1></header>
+    <main>
+      <div class="score">
+        <div class="player pX active" id="cardX">JOGADOR X<b><span id="scoreX">0</span> vitória(s)</b></div>
+        <div class="versus">×</div>
+        <div class="player pO" id="cardO">JOGADOR O<b><span id="scoreO">0</span> vitória(s)</b></div>
+      </div>
+      <div class="status" id="status">Jogador X: coloque a primeira peça</div>
+      <div class="board" id="board"></div>
+      <div class="hint" id="hint">Cada jogador coloca 3 peças. Depois, mova uma peça para qualquer casa vazia até alguém vencer.</div>
+      <div class="actions"><button class="new" id="newGame">↻ Nova rodada</button><button class="reset" id="resetScore">Zerar placar</button></div>
+    </main>
+    <footer>Quem quer ser aprovado <strong>estuda</strong> • Jogo sem empate</footer>
+  </section>
+  <div class="overlay" id="overlay"><div class="modal"><div class="cup">🏆</div><h2 id="winner"></h2><p>Formou uma linha com três peças!</p><button id="playAgain">Jogar novamente</button></div></div>
+  <script>
+    const boardEl=document.querySelector('#board'),statusEl=document.querySelector('#status'),hintEl=document.querySelector('#hint'),overlay=document.querySelector('#overlay');
+    let board=Array(9).fill(''),turn='X',placed={X:0,O:0},selected=null,locked=false,scores={X:0,O:0};
+    const wins=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+    for(let i=0;i<9;i++){const b=document.createElement('button');b.className='cell';b.dataset.i=i;b.setAttribute('aria-label',`Casa ${i+1}`);b.addEventListener('click',clickCell);boardEl.appendChild(b)}
+    function phase(){return placed.X<3||placed.O<3?'place':'move'}
+    function clickCell(e){if(locked)return;const i=+e.currentTarget.dataset.i;if(phase()==='place'){if(board[i]||placed[turn]>=3)return;board[i]=turn;placed[turn]++;render();if(checkWin())return;next()}else{if(selected===null){if(board[i]!==turn)return;selected=i;render();statusEl.textContent=`Jogador ${turn}: agora escolha uma casa vazia`;}else if(i===selected){selected=null;render();updateText()}else if(board[i]===turn){selected=i;render()}else if(!board[i]){board[i]=turn;board[selected]='';selected=null;render();if(checkWin())return;next()}}}
+    function next(){turn=turn==='X'?'O':'X';render();updateText()}
+    function updateText(){document.querySelector('#cardX').classList.toggle('active',turn==='X');document.querySelector('#cardO').classList.toggle('active',turn==='O');if(phase()==='place'){statusEl.textContent=`Jogador ${turn}: coloque sua peça (${placed[turn]+1}ª de 3)`;hintEl.textContent='Primeira fase: cada jogador distribui suas três peças no tabuleiro.'}else{statusEl.textContent=`Jogador ${turn}: toque em uma peça para movimentar`;hintEl.textContent='Segunda fase: escolha uma peça sua e depois qualquer casa vazia. Não há empate!'}}
+    function render(){[...boardEl.children].forEach((c,i)=>{c.textContent=board[i];c.className='cell'+(board[i]?` ${board[i].toLowerCase()}`:'')+(selected===i?' selected':'')+((selected!==null&&!board[i])?' target':'')})}
+    function checkWin(){const line=wins.find(w=>w.every(i=>board[i]===turn));if(!line)return false;locked=true;line.forEach(i=>boardEl.children[i].classList.add('win'));scores[turn]++;document.querySelector('#score'+turn).textContent=scores[turn];setTimeout(()=>{document.querySelector('#winner').textContent=`Jogador ${turn} venceu!`;overlay.classList.add('show');confetti()},650);return true}
+    function newRound(){board.fill('');placed={X:0,O:0};selected=null;locked=false;turn='X';overlay.classList.remove('show');render();updateText()}
+    function confetti(){const colors=['#f4c542','#ef3340','#087f5b','#168ee0','#fff'];for(let i=0;i<70;i++){const p=document.createElement('i');p.className='confetti';p.style.left=Math.random()*100+'vw';p.style.background=colors[i%colors.length];p.style.animationDelay=Math.random()*.7+'s';p.style.transform=`rotate(${Math.random()*180}deg)`;document.body.appendChild(p);setTimeout(()=>p.remove(),3000)}}
+    document.querySelector('#newGame').onclick=newRound;document.querySelector('#playAgain').onclick=newRound;document.querySelector('#resetScore').onclick=()=>{scores={X:0,O:0};document.querySelector('#scoreX').textContent=0;document.querySelector('#scoreO').textContent=0;newRound()};
+    render();updateText();
+  </script>
+</body>
+</html>
